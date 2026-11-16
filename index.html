@@ -973,7 +973,7 @@ $("#resetRow").onclick=function(e){
 };
 
 /* ---------- sync between devices (Firestore REST; only when SYNC config is built in) ---------- */
-var SYNC=null;
+var SYNC={"apiKey": "AIzaSyBpEsJtWm4FLotAX57CNieILDFPHI67pfY", "projectId": "study-club-88a86"};
 var FAM=null;try{FAM=localStorage.getItem("club-fam")}catch(e){}
 var syncState={last:0,err:"",busy:false,timer:null};
 function newFam(){var a=new Uint8Array(15);crypto.getRandomValues(a);var c="abcdefghjkmnpqrstuvwxyz23456789",s="";for(var i=0;i<a.length;i++){s+=c[a[i]%c.length];if(i%5===4&&i<14)s+="-"}return s}
