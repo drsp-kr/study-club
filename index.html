@@ -993,17 +993,20 @@ function syncNow(){
   fetch(docUrl()).then(function(res){if(res.status===404)return null;if(!res.ok)throw new Error("HTTP "+res.status);return res.json()})
   .then(function(doc){
     var r=null;try{r=doc&&JSON.parse(doc.fields.state.stringValue)}catch(e){r=null}
+    var before=JSON.stringify([known,best,days,done,progAll]);
     if(r){["sophia","stella"].forEach(function(k){var lr=resetAt[k]||0,rr=(r.resetAt||{})[k]||0;
       if(rr>lr){wipeKid(k);resetAt[k]=rr;mergeKid(k,r)}else if(rr===lr){mergeKid(k,r)}})}
     try{localStorage.setItem("club-known",JSON.stringify(known));localStorage.setItem("club-best",JSON.stringify(best));localStorage.setItem("club-days",JSON.stringify(days));localStorage.setItem("club-done",JSON.stringify(done));localStorage.setItem("club-prog",JSON.stringify(progAll));localStorage.setItem("club-reset",JSON.stringify(resetAt))}catch(e){}
+    syncState.changed=JSON.stringify([known,best,days,done,progAll])!==before;
     var state={known:known,best:best,days:days,done:done,prog:progAll,resetAt:resetAt};
     return fetch(docUrl(),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{state:{stringValue:JSON.stringify(state)},updated:{timestampValue:new Date().toISOString()}}})});
-  }).then(function(res){if(!res.ok)throw new Error("HTTP "+res.status);syncState.last=Date.now();syncState.err="";refreshView()})
+  }).then(function(res){if(!res.ok)throw new Error("HTTP "+res.status);syncState.last=Date.now();syncState.err="";
+    if(syncState.changed){syncState.quiet=true;try{refreshView()}finally{syncState.quiet=false}}})
   .catch(function(e){syncState.err=String(e.message||e)})
   .then(function(){syncState.busy=false;syncUI()});
 }
-function syncSoon(){if(!SYNC||!FAM)return;clearTimeout(syncState.timer);syncState.timer=setTimeout(syncNow,1500)}
-function refreshView(){if(st.view==="home")renderHome();else if(st.view==="kid")renderKid();else if(st.view==="topics")renderTopics();else if(st.view==="map")renderMap()}
+function syncSoon(){if(!SYNC||!FAM||syncState.quiet)return;clearTimeout(syncState.timer);syncState.timer=setTimeout(syncNow,1500)}
+function refreshView(){if(st.view==="home"){if($("#resetRow").classList.contains("hide"))renderHome()}else if(st.view==="kid")renderKid();else if(st.view==="topics")renderTopics();else if(st.view==="map")renderMap()}
 function syncUI(){
   if(!SYNC||!$("#syncStatus"))return;
   $("#syncCode").textContent=FAM||"(none yet)";
